@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة تحكم زاجل الإسكندرية | Zagel Alex Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Cairo', 'Open Sans', sans-serif;
+      background: radial-gradient(circle at 60% 10%, #252345 45%, #0d0e1a 95%);
+      color: #fff;
+      direction: rtl;
+    }
+    .main-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      background: #222039;
+      border-radius: 30px;
+      box-shadow: 0 10px 40px 0 #211a65bb;
+      padding: 2rem 1.6rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      color: #7C5DFA;
+      text-shadow: 0 0 13px #7C5DFA88;
+      margin-bottom: 1.8rem;
+    }
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+    .stat-card {
+      flex: 1 1 160px;
+      min-width: 160px;
+      background: #161320;
+      border-radius: 15px;
+      box-shadow: 0 5px 18px 2px #0c0c3250;
+      border: 2.7px solid #7C5DFA;
+      padding: 1rem;
+      margin: 0.3rem;
+      transition: box-shadow 0.23s;
+    }
+    .stat-card:hover { box-shadow: 0 0 40px 2px #7c5dfa99; }
+    .stat-title {
+      font-size: 1.025rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #A3E635;
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-shadow: 0 0 10px #fff2;
+      color: #7C5DFA;
+    }
+    .charts-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.2rem;
+      margin: 2rem auto;
+      justify-content: center;
+    }
+    .chart-box {
+      flex: 1 1 350px;
+      max-width: 400px;
+      background: #201c34;
+      padding: 1rem;
+      border-radius: 25px;
+      box-shadow: 0px 6px 24px 0 #23223e68;
+      margin-bottom: 1rem;
+    }
+    .chart-box h2 {
+      font-size: 1.13rem;
+      text-align: center;
+      margin: 0 0 5px 0;
+      color: #22D3EE;
+      font-weight: 700;
+    }
+    .footer {
+      text-align: center;
+      font-size: 1rem;
+      color: #8b8ad9;
+      padding-top: 2rem;
+    }
+    @media (max-width: 1100px) {
+      .main-container { width: 98vw; }
+      .charts-row { flex-direction: column; align-items: center; }
+    }
+    ::selection {
+      background: #7C5DFA;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <h1>لوحة تحكم زاجل الإسكندرية</h1>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-title">إجمالي عدد الأوردرات</div>
+        <div class="stat-value">1731</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">تم التسليم (0-5 أيام)</div>
+        <div class="stat-value">1078</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">تم التسليم (6-10 أيام)</div>
+        <div class="stat-value">183</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">تم التسليم (+10 أيام)</div>
+        <div class="stat-value">5</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">تم التحويل</div>
+        <div class="stat-value">270</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">قيد التوصيل</div>
+        <div class="stat-value">118</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">طلب الإلغاء</div>
+        <div class="stat-value">69</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">العميل لا يرد</div>
+        <div class="stat-value">8</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-box">
+        <h2>مدة التسليم</h2>
+        <canvas id="deliveryChart" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h2>الحالات</h2>
+        <canvas id="statusPie" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h2>تفاصيل الطلبات</h2>
+        <canvas id="ordersBar" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h2>توزيع المدة مقارنة بالإجمالي</h2>
+        <canvas id="deliveryLine" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2025 Zagel Alex Dashboard - Powered by Chart.js, Neon UI.
+    </div>
+  </div>
+  <script>
+    // Dashboard data
+    const totalOrders = 1731;
+    const delivery0_5 = 1078;
+    const delivery6_10 = 183;
+    const delivery10plus = 5;
+    const cancelled = 69;
+    const converted = 270;
+    const notAnswered = 8;
+    const delivering = 118;
+    // Chart colors
+    const chartColors = [
+      '#7C5DFA','#22D3EE','#A3E635','#F43F5E','#FF6F00','#FB7185','#E879F9','#27C4A7'
+    ];
+
+    // Delivery Chart (Bar)
+    new Chart(document.getElementById('deliveryChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['0-5 أيام','6-10 أيام','+10 أيام'],
+        datasets: [{
+          label: 'عدد الطلبات',
+          data: [delivery0_5, delivery6_10, delivery10plus],
+          backgroundColor: [chartColors[0], chartColors[1], chartColors[2]],
+          borderRadius: 10
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {display: false},
+          tooltip: {backgroundColor:'#222039',titleColor:'#22D3EE',bodyColor:'#A3E635'}
+        },
+        scales: {
+          x: {grid:{display:false},ticks:{color:'#fff'}},
+          y: {grid:{color:'#252345'},ticks:{color:'#fff'}}
+        }
+      }
+    });
+
+    // Status Pie Chart (Pie)
+    new Chart(document.getElementById('statusPie').getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: [
+          'تم التسليم','تم التحويل','قيد التوصيل','طلب الإلغاء','العميل لا يرد'
+        ],
+        datasets: [{
+          data: [
+            delivery0_5 + delivery6_10 + delivery10plus,
+            converted,
+            delivering,
+            cancelled,
+            notAnswered
+          ],
+          backgroundColor: [chartColors[0],chartColors[4],chartColors[5],
+                            chartColors[3],chartColors[7]],
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {position: 'bottom', labels:{color:'#fff'}},
+          tooltip: {backgroundColor:'#222039',titleColor:'#7C5DFA',bodyColor:'#A3E635'}
+        }
+      }
+    });
+
+    // Orders Details (Bar horizontal)
+    new Chart(document.getElementById('ordersBar').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: [
+          'تم التسليم (0-5 أيام)','تم التسليم (6-10 أيام)','تم التسليم (+10 أيام)',
+          'تم التحويل','قيد التوصيل','طلب الإلغاء','العميل لا يرد'
+        ],
+        datasets: [{
+          label: 'عدد الطلبات',
+          data: [delivery0_5,delivery6_10,delivery10plus,converted,delivering,cancelled,notAnswered],
+          backgroundColor: chartColors,
+          borderRadius: 10
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: {
+          legend: {display: false},
+          tooltip: {backgroundColor:'#222039',titleColor:'#A3E635',bodyColor:'#22D3EE'}
+        },
+        scales: {
+          x: {grid:{color:'#252345'},ticks:{color:'#fff'}},
+          y: {grid:{display:false},ticks:{color:'#fff'}}
+        }
+      }
+    });
+
+    // Delivery Vs Total (Line)
+    new Chart(document.getElementById('deliveryLine').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ['تم التسليم','تم التحويل','قيد التوصيل','طلب الإلغاء','العميل لا يرد'],
+        datasets: [{
+          label: 'الحالة',
+          data: [
+            delivery0_5+delivery6_10+delivery10plus,
+            converted, delivering, cancelled, notAnswered
+          ],
+          borderColor: '#7C5DFA',
+          backgroundColor: '#7C5DFA44',
+          pointBackgroundColor: chartColors,
+          pointBorderWidth: 4,
+          tension: 0.4
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {display: false},
+          tooltip: {backgroundColor:'#222039',titleColor:'#A3E635',bodyColor:'#fff'}
+        },
+        scales: {
+          x: {grid:{color:'#252345'},ticks:{color:'#fff'}},
+          y: {grid:{color:'#252345'},ticks:{color:'#fff'}}
+        }
+      }
+    });
+  </script>
+</body>
+</html>
